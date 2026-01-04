@@ -8,59 +8,69 @@
         /* Reset y Base */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Asegurar que nada se salga */
+        }
+
         body {
-            width: 100vw;
-            height: 100vh;
             background-color: white;
             color: black;
             font-family: 'Courier New', Courier, monospace;
             display: flex;
             flex-direction: column;
-            border: 10px solid black;
-            overflow: hidden;
+            border: 5px solid black;
         }
 
         /* Layout */
         header {
-            border-bottom: 4px solid black;
-            padding: 10px 20px;
+            border-bottom: 3px solid black;
+            padding: 5px 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 80px;
-            flex-shrink: 0;
+            height: 60px;
+            flex-shrink: 0; /* No encoger */
         }
 
-        h1 { font-size: 32px; text-transform: uppercase; display: flex; align-items: center; gap: 20px; }
-        .header-time { font-size: 32px; font-weight: bold; border-left: 3px solid black; padding-left: 20px; }
+        h1 { font-size: 24px; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+        .header-time { font-size: 24px; font-weight: bold; border-left: 2px solid black; padding-left: 10px; }
         
         main {
-            flex: 1;
-            padding: 15px;
+            flex: 1; /* Ocupar todo el espacio restante */
+            padding: 5px;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 15px;
+            /* USAR minmax(0, 1fr) es la clave para que el contenido no fuerce el tamaño */
+            grid-template-rows: repeat(2, minmax(0, 1fr)); 
+            gap: 5px;
+            min-height: 0; /* Permite al contenedor encogerse */
             overflow: hidden;
         }
 
-        /* Responsive Mobile/Portrait */
-        @media (max-width: 768px) {
-            body {
-                height: auto;
-                min-height: 100vh;
-                overflow-y: auto;
-                border-width: 5px;
-            }
-            
+        /* Responsive solo para móviles muy pequeños (Teléfonos) */
+        @media (max-width: 600px) {
             header {
                 flex-direction: column;
                 height: auto;
-                padding: 15px;
-                gap: 10px;
-                text-align: center;
+                padding: 10px;
+                gap: 5px;
+            }
+            
+            /* En móviles sí permitimos scroll porque es imposible meter todo en 1 pantalla pequeña */
+            body {
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
             }
 
+            main {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+            }
+            
             h1 {
                 flex-direction: column;
                 font-size: 24px;
@@ -78,12 +88,6 @@
                 margin-top: 5px;
             }
 
-            main {
-                display: flex;
-                flex-direction: column;
-                height: auto;
-            }
-
             .widget {
                 min-height: 180px;
             }
@@ -91,25 +95,36 @@
 
         .widget {
             border: 2px solid black;
-            padding: 10px;
+            padding: 5px;
             border-radius: 8px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
+           
 
         .widget-title {
-            font-size: 18px;
+            font-size: 2.5vh; /* Tamaño relativo a la altura de la pantalla */
             border-bottom: 2px solid black;
             margin-bottom: 5px;
             padding-bottom: 2px;
             width: 100%;
             text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .big-text { font-size: 42px; font-weight: bold; text-align: center; }
+        .big-text { 
+            font-size: 6vh; /* Tamaño relativo a la altura de la pantalla */
+            font-weight: bold; 
+            text-align: center; 
+            line-height: 1;
+        }
         
         footer {
             border-top: 2px solid black;
@@ -117,14 +132,195 @@
             text-align: center;
             font-size: 12px;
             height: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            background: white;
+            border: 2px solid black;
+            padding: 2px 10px;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .mode-btn:hover {
+            background: black;
+            color: white;
+        }
+
+        /* Estilos Modo Estudio */
+        #study-mode {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .study-header-card {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            border: 2px solid black;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-align: center;
+            background: white;
+        }
+
+        .study-time-display { font-size: 24px; font-weight: bold; }
+        .study-date-display { font-size: 14px; margin-top: 5px; }
+
+        .pomodoro-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .pomodoro-timer {
+            font-size: 120px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .pomodoro-status {
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .pomodoro-message {
+            font-size: 18px;
+            font-style: italic;
+            min-height: 24px;
+            max-width: 600px;
+        }
+
+        .pomodoro-controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .btn-large {
+            padding: 10px 30px;
+            font-size: 18px;
+            background: white;
+            border: 3px solid black;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-large:hover {
+            background: black;
+            color: white;
+        }
+
+        .btn-exit {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: none;
+            background: none;
+            text-decoration: underline;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        /* Estilos Modo Dormir */
+        #sleep-mode {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            color: white;
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .sleep-clock {
+            font-size: 15vw; /* Muy grande y responsivo */
+            font-weight: bold;
+            font-family: monospace;
+        }
+        
+        .sleep-date {
+            font-size: 24px;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+
+        .sleep-hint {
+            position: absolute;
+            bottom: 20px;
+            font-size: 12px;
+            opacity: 0.3;
         }
     </style>
 </head>
 <body>
+    <!-- Overlay Modo Dormir -->
+    <div id="sleep-mode" onclick="exitSleepMode()">
+        <div class="sleep-clock clock-time"><%= data.time %></div>
+        <div class="sleep-date"><%= data.date %></div>
+        <div class="sleep-hint">Toca la pantalla para despertar</div>
+    </div>
+
+    <!-- Overlay Modo Estudio -->
+    <div id="study-mode">
+        <div class="study-header-card">
+            <div class="study-time-display clock-time"><%= data.time %></div>
+            <div class="study-date-display"><%= data.date %></div>
+        </div>
+
+        <div class="pomodoro-container">
+            <div class="pomodoro-status" id="pomo-status">ENFOQUE</div>
+            <div class="pomodoro-timer" id="pomo-timer">25:00</div>
+            <div class="pomodoro-message" id="pomo-message"></div>
+            
+            <div class="pomodoro-controls">
+                <button class="btn-large" onclick="startPomodoro()" id="btn-start">INICIAR</button>
+                <button class="btn-large" onclick="resetPomodoro()">REINICIAR</button>
+            </div>
+        </div>
+
+        <button class="btn-exit" onclick="exitStudyMode()">Salir del Modo Estudio</button>
+    </div>
+
     <header>
         <h1>
             KTRMNL2
             <span class="header-time"><%= data.time %></span>
+            <button onclick="toggleFullScreen()" style="background: none; border: none; cursor: pointer; font-size: 24px; padding: 0 10px;" title="Pantalla Completa">🪟</button>
         </h1>
         <div class="quote-container" style="font-size: 14px; max-width: 400px; text-align: right; font-style: italic; line-height: 1.2;">
             "<%= data.motivation %>"
@@ -138,17 +334,142 @@
     </main>
 
     <footer>
-        Ultima Actualización: <%= data.generatedAt %> | Desarrollado por Kenner Cadenas - KTRMNL2
+        <div>Ultima Actualización: <%= data.generatedAt %> | Desarrollado por: Kenner Cadenas Average Programmer - KTRMNL2 / V 1.0</div>
+        <div class="mode-buttons">
+            <button class="mode-btn" onclick="enterStudyMode()">Modo Estudio/Trabajo</button>
+            <button class="mode-btn" onclick="enterSleepMode()">Modo Dormir</button>
+        </div>
     </footer>
 
     <script>
-        // Recargar la página cada 10 minutos para obtener datos frescos (clima, recordatorios)
-        setTimeout(() => {
-            window.location.reload();
-            //actualiza cada 1 minuto
-        }, 1 * 60 * 1000);
+        // --- LÓGICA MODO DORMIR ---
+        function enterSleepMode() {
+            document.getElementById('sleep-mode').style.display = 'flex';
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(e => console.log(e));
+            }
+        }
 
-        // Actualizar reloj en tiempo real (solo visible en navegador, en TRMNL será estático)
+        function exitSleepMode() {
+            document.getElementById('sleep-mode').style.display = 'none';
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(e => console.log(e));
+            }
+        }
+
+        // --- LÓGICA MODO ESTUDIO (POMODORO) ---
+        let pomoInterval;
+        let pomoTime = 25 * 60; // 25 minutos en segundos
+        let isRunning = false;
+        let currentPhase = 'work'; // work, shortBreak, longBreak
+        let cycles = 0;
+
+        const funnyMessages = [
+            "¡Suelta el teclado! Tus manos te lo agradecerán.",
+            "Hora de hidratarse, planta humana.",
+            "Estira las piernas o te convertirás en una silla.",
+            "Mira por la ventana, el mundo sigue ahí fuera.",
+            "Pausa para café (o té, no juzgamos).",
+            "Respira hondo... y no pienses en bugs.",
+            "Haz 5 sentadillas. ¡Vamos!",
+            "Cierra los ojos 20 segundos. En serio."
+        ];
+
+        function enterStudyMode() {
+            document.getElementById('study-mode').style.display = 'flex';
+            // Solicitar pantalla completa si es posible
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(e => console.log(e));
+            }
+        }
+
+        function exitStudyMode() {
+            document.getElementById('study-mode').style.display = 'none';
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(e => console.log(e));
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(pomoTime / 60);
+            const seconds = pomoTime % 60;
+            document.getElementById('pomo-timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startPomodoro() {
+            if (isRunning) {
+                // Pausar
+                clearInterval(pomoInterval);
+                isRunning = false;
+                document.getElementById('btn-start').textContent = "CONTINUAR";
+            } else {
+                // Iniciar
+                isRunning = true;
+                document.getElementById('btn-start').textContent = "PAUSAR";
+                pomoInterval = setInterval(() => {
+                    pomoTime--;
+                    updateTimerDisplay();
+
+                    if (pomoTime <= 0) {
+                        completePhase();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetPomodoro() {
+            clearInterval(pomoInterval);
+            isRunning = false;
+            document.getElementById('btn-start').textContent = "INICIAR";
+            
+            // Reiniciar a la fase actual
+            if (currentPhase === 'work') pomoTime = 25 * 60;
+            else if (currentPhase === 'shortBreak') pomoTime = 5 * 60;
+            else pomoTime = 15 * 60;
+            
+            updateTimerDisplay();
+        }
+
+        function completePhase() {
+            clearInterval(pomoInterval);
+            isRunning = false;
+            document.getElementById('btn-start').textContent = "INICIAR SIGUIENTE";
+            
+            // Reproducir sonido simple (beep)
+            const audio = new AudioContext();
+            const osc = audio.createOscillator();
+            osc.connect(audio.destination);
+            osc.start();
+            setTimeout(() => osc.stop(), 500);
+
+            if (currentPhase === 'work') {
+                cycles++;
+                if (cycles % 4 === 0) {
+                    currentPhase = 'longBreak';
+                    pomoTime = 15 * 60;
+                    document.getElementById('pomo-status').textContent = "DESCANSO LARGO";
+                } else {
+                    currentPhase = 'shortBreak';
+                    pomoTime = 5 * 60;
+                    document.getElementById('pomo-status').textContent = "DESCANSO CORTO";
+                }
+                // Mostrar mensaje gracioso aleatorio
+                const msg = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+                document.getElementById('pomo-message').textContent = msg;
+            } else {
+                // Volver al trabajo
+                currentPhase = 'work';
+                pomoTime = 25 * 60;
+                document.getElementById('pomo-status').textContent = "ENFOQUE";
+                document.getElementById('pomo-message').textContent = "";
+            }
+            updateTimerDisplay();
+        }
+
+        // --- FIN LÓGICA MODO ESTUDIO ---
+
+        // 1. RELOJ EN TIEMPO REAL (Actualización cada 1 segundo)
         function updateClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -165,6 +486,68 @@
             });
         }
         setInterval(updateClock, 1000);
+
+        // 2. CLIMA (Actualización cada 20 minutos)
+        async function updateWeather() {
+            try {
+                const response = await fetch('/api/weather-data');
+                if (!response.ok) return;
+                const weather = await response.json();
+                
+                // Buscar elementos del widget de clima (asumiendo estructura fija)
+                // Nota: Esto requiere que el widget de clima tenga clases específicas o IDs.
+                // Como es dinámico, recargaremos solo si hay cambios drásticos, pero por ahora
+                // vamos a intentar actualizar el DOM si encontramos los elementos.
+                // Para simplificar sin modificar todos los widgets, podemos recargar la página
+                // SOLO si han pasado 20 minutos, pero el usuario pidió NO recargar cada minuto.
+                
+                // Mejor enfoque: Recargar la página completa cada 20 minutos para asegurar todo.
+                // O actualizar el DOM si podemos identificar el widget.
+                // Vamos a intentar actualizar el DOM del widget de clima si existe.
+                
+                // Como no tenemos IDs únicos fáciles, vamos a buscar por contenido o estructura
+                // O mejor, recargamos la página cada 20 minutos. Es lo más seguro y cumple el requisito.
+                window.location.reload(); 
+            } catch (e) {
+                console.error("Error actualizando clima", e);
+            }
+        }
+        // 20 minutos * 60 segundos * 1000 ms
+        setInterval(updateWeather, 20 * 60 * 1000);
+
+        // 3. RECORDATORIOS (Polling cada 1 minuto para detectar cambios)
+        let currentReminder = "<%= data.reminder %>"; // Valor inicial
+        
+        async function checkReminders() {
+            try {
+                const response = await fetch('/api/reminder-data');
+                if (!response.ok) return;
+                const data = await response.json();
+                
+                if (data.reminder !== currentReminder) {
+                    console.log("Cambio detectado en recordatorios. Recargando...");
+                    window.location.reload(); // La forma más fácil de reflejar el cambio en el widget EJS
+                }
+            } catch (e) {
+                console.error("Error verificando recordatorios", e);
+            }
+        }
+        // Verificar cada 1 minuto
+        setInterval(checkReminders, 60 * 1000);
+
+        // 4. PANTALLA COMPLETA MANUAL
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => {
+                    console.log("Error al intentar pantalla completa:", e);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
     </script>
 </body>
 </html>

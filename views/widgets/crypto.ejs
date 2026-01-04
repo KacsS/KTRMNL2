@@ -1,11 +1,26 @@
 <div class="widget">
-    <div class="widget-title"><%= widget.title || 'CRYPTO' %></div>
-    <div style="display: flex; justify-content: space-between; align-items: baseline;">
-        <span style="font-size: 24px; font-weight: bold;">BTC</span>
-        <span style="font-size: 24px;">$98,420</span>
-    </div>
-    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px;">
-        <span style="font-size: 24px; font-weight: bold;">ETH</span>
-        <span style="font-size: 24px;">$2,850</span>
+    <style>
+        .crypto-up { color: green; }
+        .crypto-down { color: red; }
+    </style>
+    <div class="widget-title"><%= widget.title || 'CRIPTOS' %></div>
+    <div style="width: 100%; padding: 0 10px; display: flex; flex-direction: column; justify-content: space-around; height: 100%;">
+        <% if (data.crypto && data.crypto.length > 0) { %>
+            <% data.crypto.forEach(coin => { %>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 5px 0;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: bold; font-size: 2.5vh;"><%= coin.symbol %></span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 2.5vh;">$<%= coin.price.toLocaleString() %></div>
+                        <div style="font-size: 1.8vh;" class="<%= coin.change >= 0 ? 'crypto-up' : 'crypto-down' %>">
+                            <%= coin.change >= 0 ? '+' : '' %><%= coin.change.toFixed(2) %>%
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div style="text-align: center; font-size: 2vh;">Cargando datos...</div>
+        <% } %>
     </div>
 </div>

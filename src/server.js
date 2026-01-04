@@ -139,6 +139,50 @@ function getMotivation() {
     return quotes[dayOfYear % quotes.length];
 }
 
+async function getCryptoData() {
+    try {
+        // Obtener datos de Bitcoin, Ethereum y Tether con sparkline (gráfica simple 7 días)
+        const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,tether&order=market_cap_desc&per_page=3&page=1&sparkline=true&price_change_percentage=24h';
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Crypto API error');
+        const data = await response.json();
+        
+        // Formatear datos
+        return data.map(coin => ({
+            id: coin.id,
+            symbol: coin.symbol.toUpperCase(),
+            name: coin.name,
+            price: coin.current_price,
+            change: coin.price_change_percentage_24h,
+            sparkline: coin.sparkline_in_7d.price
+        }));
+    } catch (error) {
+        console.error('Error obteniendo crypto:', error);
+        return null;
+    }
+}
+
+// API Endpoints para actualizaciones dinámicas
+app.get('/api/weather-data', async (req, res) => {
+    const weather = await getWeatherData();
+    res.json(weather);
+});
+
+app.get('/api/crypto-data', async (req, res) => {
+    const crypto = await getCryptoData();
+    res.json(crypto);
+});
+
+app.get('/api/reminder-data', (req, res) => {
+    const dataPath = path.join(__dirname, '../config/data.json');
+    let savedData = { reminder: '' };
+    if (fs.existsSync(dataPath)) {
+        savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    }
+    res.json({ reminder: savedData.reminder });
+});
+
 app.get('/dashboard', async (req, res) => {
     // Cargar configuración de layout
     const layoutPath = path.join(__dirname, '../config/layout.json');
@@ -162,6 +206,17 @@ app.get('/dashboard', async (req, res) => {
         weather = { temp: '--', condition: 'Fallback', icon: '❓' };
     }
 
+    // Obtener Criptos
+    let crypto = await getCryptoData();
+    if (!crypto) {
+        // Datos falsos de respaldo si falla la API
+        crypto = [
+            { symbol: 'BTC', price: 0, change: 0, sparkline: [] },
+            { symbol: 'ETH', price: 0, change: 0, sparkline: [] },
+            { symbol: 'USDT', price: 1, change: 0, sparkline: [] }
+        ];
+    }
+
     // Datos globales para los widgets
     const data = {
         date: new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
@@ -169,6 +224,7 @@ app.get('/dashboard', async (req, res) => {
         battery: '100%', // En tablet siempre asumimos 100% o enchufado
         reminder: savedData.reminder,
         weather: weather,
+        crypto: crypto,
         motivation: getMotivation(),
         generatedAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     };
@@ -199,6 +255,7 @@ app.get('/admin', (req, res) => {
         // { type: 'clock', name: 'Reloj' }, // Movido al header
         { type: 'weather', name: 'Clima' },
         { type: 'crypto', name: 'Criptomonedas' },
+        { type: 'crypto_chart', name: 'Gráfica Cripto' },
         { type: 'reminder', name: 'Recordatorio' }
     ];
 

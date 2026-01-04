@@ -1,0 +1,76 @@
+<div class="widget">
+    <div class="widget-title"><%= widget.title || 'GRÁFICA CRIPTO' %></div>
+    <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 5px;">
+        <!-- Usamos Chart.js para renderizar -->
+        <canvas id="cryptoChart_<%= Math.floor(Math.random() * 10000) %>" 
+                data-crypto="<%= JSON.stringify(data.crypto || []) %>"
+                style="width: 100%; height: 100%;"></canvas>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        (function() {
+            // Buscar el canvas dentro de este widget específico
+            const currentScript = document.currentScript;
+            const container = currentScript.parentElement;
+            const canvas = container.querySelector('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Datos pasados desde el atributo data (evita errores de sintaxis en editor)
+            let cryptoData = [];
+            try {
+                cryptoData = JSON.parse(canvas.dataset.crypto);
+            } catch (e) {
+                console.error('Error parsing crypto data', e);
+            }
+            
+            if (!cryptoData || cryptoData.length === 0) return;
+
+            // Usamos Bitcoin por defecto para la gráfica principal, o combinamos
+            // Para simplificar y que se vea bien en pequeño, mostramos solo BTC o una comparativa normalizada
+            // Vamos a mostrar BTC por ser la principal
+            const btc = cryptoData.find(c => c.symbol === 'BTC');
+            const prices = (btc && btc.sparkline) ? btc.sparkline : [];
+            
+            if (prices.length === 0) return;
+
+            // Crear etiquetas simples (1, 2, 3...)
+            const labels = prices.map((_, i) => i);
+
+            // Color basado en si subió o bajó
+            const startPrice = prices[0];
+            const endPrice = prices[prices.length - 1];
+            const color = endPrice >= startPrice ? 'green' : 'red';
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Bitcoin (7d)',
+                        data: prices,
+                        borderColor: color,
+                        borderWidth: 2,
+                        pointRadius: 0, // Sin puntos para que parezca sparkline limpio
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false } // Desactivar tooltips para limpieza
+                    },
+                    scales: {
+                        x: { display: false }, // Ocultar ejes
+                        y: { display: false }
+                    },
+                    layout: {
+                        padding: 5
+                    }
+                }
+            });
+        })();
+    </script>
+</div>

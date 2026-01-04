@@ -11,6 +11,10 @@ Este proyecto permite reutilizar tablets antiguas o dispositivos móviles como p
 - **Auto-Refresco Inteligente:** La página se recarga automáticamente cada 1 minuto para actualizar datos externos (clima, fecha).
 - **Interfaz Adaptable:** Diseño limpio y legible, ideal para dejar en una mesa o pared.
 - **Frases Diarias:** Muestra una frase de motivación diferente cada 24 horas.
+- **Modos de Enfoque:**
+    - **Modo Estudio:** Temporizador Pomodoro (25 min) con overlay visual.
+    - **Modo Dormir:** Reloj atenuado sobre fondo negro para la noche.
+- **Pantalla Completa:** Botón manual para activar el modo fullscreen.
 
 ### 📟 Modo TRMNL (E-Ink)
 - **Generación de Imágenes:** Renderiza la vista HTML a una imagen PNG optimizada (800x480) usando Puppeteer.
@@ -20,6 +24,9 @@ Este proyecto permite reutilizar tablets antiguas o dispositivos móviles como p
 ### 🌤️ Integraciones
 - **Clima en Tiempo Real:** Conexión con la API de [Open-Meteo](https://open-meteo.com/) para obtener temperatura y condiciones climáticas.
   - *Configurado actualmente para:* Barquisimeto, Lara, Venezuela.
+- **Criptomonedas:**
+    - **Precios:** Seguimiento en tiempo real de BTC, ETH y USDT vía [CoinGecko](https://www.coingecko.com/).
+    - **Gráficas:** Widget visual con historial de precios de 7 días (Sparkline) usando Chart.js.
 - **Sistema de Frases:** Base de datos local de frases inspiradoras que rotan diariamente.
 
 ## 🛠️ Tecnologías Utilizadas
@@ -27,6 +34,7 @@ Este proyecto permite reutilizar tablets antiguas o dispositivos móviles como p
 - **Node.js:** Entorno de ejecución del servidor.
 - **Express:** Framework web para manejar las rutas y la API.
 - **EJS (Embedded JavaScript):** Motor de plantillas para generar el HTML dinámico.
+- **Chart.js:** Librería para renderizar gráficas de criptomonedas en el cliente.
 - **Puppeteer:** Librería para controlar Chrome/Chromium y generar capturas de pantalla (para el modo TRMNL).
 - **CSS3 / HTML5:** Diseño y maquetación del dashboard.
 

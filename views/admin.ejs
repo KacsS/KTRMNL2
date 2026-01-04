@@ -54,9 +54,16 @@
         </div>
     </div>
 
+    <div id="app-data" data-widgets='<%- (layout && layout.widgets) ? JSON.stringify(layout.widgets) : "[]" %>' style="display:none;"></div>
     <script>
-        // Estado inicial desde el servidor (con fallback a array vacío para evitar errores)
-        let currentWidgets = <%- (layout && layout.widgets) ? JSON.stringify(layout.widgets) : '[]' %>;
+        // Estado inicial desde el servidor
+        let currentWidgets = [];
+        try {
+            const rawData = document.getElementById('app-data').dataset.widgets;
+            currentWidgets = JSON.parse(rawData);
+        } catch (e) {
+            console.error('Error parsing initial widgets', e);
+        }
 
         function renderActiveWidgets() {
             const container = document.getElementById('active-list');

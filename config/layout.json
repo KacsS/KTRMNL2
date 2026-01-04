@@ -11,9 +11,14 @@
             "title": "CLIMA"
         },
         {
-            "id": "w1767500484607",
+            "id": "w1767554986931",
             "type": "reminder",
             "title": "RECORDATORIO"
+        },
+        {
+            "id": "w1767554992419",
+            "type": "crypto",
+            "title": "CRIPTOMONEDAS"
         }
     ]
 }
