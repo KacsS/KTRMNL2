@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=800, height=480, initial-scale=1.0">
+    <title>TRMNL Dashboard</title>
+    <style>
+        /* Reset y Base para E-Ink */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            width: 800px;
+            height: 480px;
+            background-color: white;
+            color: black;
+            font-family: 'Courier New', Courier, monospace; /* Fuente monoespaciada va bien con e-ink */
+            display: flex;
+            flex-direction: column;
+            border: 10px solid black; /* Marco de depuración */
+            overflow: hidden;
+        }
+
+        /* Layout */
+        header {
+            border-bottom: 4px solid black;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        h1 { font-size: 32px; text-transform: uppercase; display: flex; align-items: center; gap: 20px; }
+        .header-time { font-size: 32px; font-weight: bold; border-left: 3px solid black; padding-left: 20px; }
+        .battery { font-size: 20px; font-weight: bold; }
+
+        main {
+            flex: 1;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr; /* Forzar 2 filas */
+            gap: 15px;
+            height: 360px; /* Altura restante aprox */
+        }
+
+        .widget {
+            border: 2px solid black;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .widget-title {
+            font-size: 18px;
+            border-bottom: 2px solid black;
+            margin-bottom: 5px;
+            padding-bottom: 2px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .big-text { font-size: 42px; font-weight: bold; text-align: center; }
+        
+        footer {
+            border-top: 2px solid black;
+            padding: 5px;
+            text-align: center;
+            font-size: 12px;
+            height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>
+            KTRMNL2
+            <span class="header-time"><%= data.time %></span>
+        </h1>
+        <div class="quote-container" style="font-size: 14px; max-width: 400px; text-align: right; font-style: italic; line-height: 1.2;">
+            "<%= data.motivation %>"
+        </div>
+    </header>
+
+    <main>
+        <% layout.widgets.forEach(function(widget) { %>
+            <%- include(`widgets/${widget.type}`, { widget: widget, data: data }) %>
+        <% }); %>
+    </main>
+
+    <footer>
+        Ultima Actualización: <%= data.generatedAt %> | Desarrollado por Kenner Cadenas - KTRMNL2
+    </footer>
+
+    <script>
+        // Recargar la página cada 10 minutos para obtener datos frescos (clima, recordatorios)
+        setTimeout(() => {
+            window.location.reload();
+            //actualiza cada 1 minuto
+        }, 1 * 60 * 1000);
+
+        // Actualizar reloj en tiempo real (solo visible en navegador, en TRMNL será estático)
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            
+            const timeElement = document.querySelector('.header-time');
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+
+            // Actualizar widgets de reloj
+            const clockWidgets = document.querySelectorAll('.clock-time');
+            clockWidgets.forEach(el => {
+                el.textContent = timeString;
+            });
+        }
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+    "widgets": [
+        {
+            "id": "w1767499881835",
+            "type": "date",
+            "title": "FECHA"
+        },
+        {
+            "id": "w1767500483227",
+            "type": "weather",
+            "title": "CLIMA"
+        },
+        {
+            "id": "w1767500484607",
+            "type": "reminder",
+            "title": "RECORDATORIO"
+        }
+    ]
+}

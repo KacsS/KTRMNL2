@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTRMNL2 Admin</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f0f0f0; }
+        h1 { text-align: center; }
+        .container { display: flex; gap: 20px; }
+        .panel { background: white; padding: 20px; border-radius: 8px; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .widget-item { 
+            background: #eee; padding: 10px; margin-bottom: 10px; border-radius: 4px; cursor: pointer; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .widget-item:hover { background: #ddd; }
+        .active-widgets { min-height: 200px; border: 2px dashed #ccc; padding: 10px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .remove-btn { color: red; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Configuración TRMNL</h1>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>Widgets Disponibles</h2>
+            <div id="available-list">
+                <% availableWidgets.forEach(w => { %>
+                    <div class="widget-item" onclick="addWidget('<%= w.type %>', '<%= w.name %>')">
+                        <span><%= w.name %></span>
+                        <span>+</span>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Configuración General</h2>
+            <div style="margin-bottom: 20px;">
+                <label style="display:block; margin-bottom: 5px; font-weight: bold;">Recordatorio:</label>
+                <textarea id="reminder-input" rows="3" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;"><%= savedData.reminder %></textarea>
+            </div>
+            <button onclick="saveData()" style="background: #28a745;">Guardar Datos</button>
+        </div>
+
+        <div class="panel">
+            <h2>Tu Pantalla</h2>
+            <div id="active-list" class="active-widgets">
+                <!-- Se llenará con JS -->
+            </div>
+            <button onclick="saveLayout()" style="margin-top: 20px;">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <script>
+        // Estado inicial desde el servidor (con fallback a array vacío para evitar errores)
+        let currentWidgets = <%- (layout && layout.widgets) ? JSON.stringify(layout.widgets) : '[]' %>;
+
+        function renderActiveWidgets() {
+            const container = document.getElementById('active-list');
+            container.innerHTML = '';
+            currentWidgets.forEach((widget, index) => {
+                const div = document.createElement('div');
+                div.className = 'widget-item';
+                div.innerHTML = `
+                    <span>${widget.title || widget.type}</span>
+                    <span class="remove-btn" onclick="removeWidget(${index})">×</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addWidget(type, name) {
+            if (currentWidgets.length >= 4) {
+                alert('Máximo 4 widgets por ahora (limitación de grid)');
+                return;
+            }
+            currentWidgets.push({
+                id: 'w' + Date.now(),
+                type: type,
+                title: name.toUpperCase()
+            });
+            renderActiveWidgets();
+        }
+
+        function removeWidget(index) {
+            currentWidgets.splice(index, 1);
+            renderActiveWidgets();
+        }
+
+        async function saveLayout() {
+            const res = await fetch('/api/layout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ widgets: currentWidgets })
+            });
+            if (res.ok) {
+                alert('Layout guardado!');
+            } else {
+                alert('Error al guardar layout');
+            }
+        }
+
+        async function saveData() {
+            const reminder = document.getElementById('reminder-input').value;
+            const res = await fetch('/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reminder: reminder })
+            });
+            if (res.ok) {
+                alert('Datos guardados!');
+            } else {
+                alert('Error al guardar datos');
+            }
+        }
+
+        // Render inicial
+        renderActiveWidgets();
+    </script>
+</body>
+</html>
