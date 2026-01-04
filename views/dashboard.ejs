@@ -2,20 +2,21 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=800, height=480, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRMNL Dashboard</title>
     <style>
-        /* Reset y Base para E-Ink */
+        /* Reset y Base */
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body {
-            width: 800px;
-            height: 480px;
+            width: 100vw;
+            height: 100vh;
             background-color: white;
             color: black;
-            font-family: 'Courier New', Courier, monospace; /* Fuente monoespaciada va bien con e-ink */
+            font-family: 'Courier New', Courier, monospace;
             display: flex;
             flex-direction: column;
-            border: 10px solid black; /* Marco de depuración */
+            border: 10px solid black;
             overflow: hidden;
         }
 
@@ -27,20 +28,65 @@
             justify-content: space-between;
             align-items: center;
             height: 80px;
+            flex-shrink: 0;
         }
 
         h1 { font-size: 32px; text-transform: uppercase; display: flex; align-items: center; gap: 20px; }
         .header-time { font-size: 32px; font-weight: bold; border-left: 3px solid black; padding-left: 20px; }
-        .battery { font-size: 20px; font-weight: bold; }
-
+        
         main {
             flex: 1;
             padding: 15px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr; /* Forzar 2 filas */
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
             gap: 15px;
-            height: 360px; /* Altura restante aprox */
+            overflow: hidden;
+        }
+
+        /* Responsive Mobile/Portrait */
+        @media (max-width: 768px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+                border-width: 5px;
+            }
+            
+            header {
+                flex-direction: column;
+                height: auto;
+                padding: 15px;
+                gap: 10px;
+                text-align: center;
+            }
+
+            h1 {
+                flex-direction: column;
+                font-size: 24px;
+            }
+
+            .header-time {
+                border-left: none;
+                padding-left: 0;
+                font-size: 28px;
+            }
+
+            .quote-container {
+                text-align: center !important;
+                max-width: 100% !important;
+                margin-top: 5px;
+            }
+
+            main {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+            }
+
+            .widget {
+                min-height: 180px;
+            }
         }
 
         .widget {
