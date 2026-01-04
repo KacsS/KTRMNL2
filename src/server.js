@@ -17,6 +17,11 @@ app.use((req, res, next) => {
     next();
 });
 
+// Redirección de la raíz a /dashboard
+app.get('/', (req, res) => {
+    res.redirect('/dashboard');
+});
+
 // 1. Endpoint principal que llama el dispositivo TRMNL
 app.get('/api/display', async (req, res) => {
     try {

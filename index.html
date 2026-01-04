@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=/dashboard">
+    <title>Redireccionando...</title>
+    <script>
+        // Si estamos en localhost:3000, ir a /dashboard
+        // Si estamos en Apache (ej: localhost/KTRMNL2/), intentar ir al puerto 3000
+        if (window.location.port === "3000") {
+            window.location.href = "/dashboard";
+        } else {
+            // Asumir que el servidor Node está corriendo en el puerto 3000
+            window.location.href = "http://" + window.location.hostname + ":3000/dashboard";
+        }
+    </script>
+</head>
+<body>
+    <p>Redireccionando a <a href="/dashboard">/dashboard</a>...</p>
+</body>
+</html>
