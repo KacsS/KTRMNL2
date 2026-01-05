@@ -1,34 +1,36 @@
-# Configuración de Vercel KV para KTRMNL2
+# Configuración de Redis (Upstash) para KTRMNL2
 
-## ¿Por qué Vercel KV?
+## ¿Por qué Redis?
 
 Vercel tiene un sistema de archivos **efímero**, lo que significa que cualquier archivo que guardes (como `layout.json` o `data.json`) se perderá cuando:
 - La función se reinicie (cada ~20 minutos de inactividad)
 - Hagas un nuevo deploy
 - Vercel recicle la instancia automáticamente
 
-**Vercel KV** es una base de datos Redis que persiste tus datos permanentemente.
+**Upstash Redis** es una base de datos Redis que persiste tus datos permanentemente y está integrada con Vercel.
 
-## Pasos para configurar Vercel KV
+## Pasos para configurar Upstash Redis
 
-### 1. Crear una base de datos KV en Vercel
+### 1. Crear una base de datos Redis en Vercel
 
 1. Ve a tu proyecto en [Vercel Dashboard](https://vercel.com/dashboard)
 2. Haz clic en la pestaña **"Storage"**
-3. Haz clic en **"Create Database"**
-4. Selecciona **"KV"** (Redis)
-5. Dale un nombre (por ejemplo: `ktrmnl2-storage`)
-6. Haz clic en **"Create"**
+3. Haz clic en **"Create Database"** o **"Connect Store"**
+4. Selecciona **"Upstash"** o **"Redis"**
+5. Haz clic en **"Continue"**
+6. Dale un nombre (por ejemplo: `ktrmnl2-storage`)
+7. Selecciona la región más cercana (por ejemplo: `us-east-1`)
+8. Haz clic en **"Create"**
 
-### 2. Conectar KV a tu proyecto
+### 2. Conectar Redis a tu proyecto
 
-1. En la página de tu base de datos KV, haz clic en **"Connect Project"**
+1. Después de crear la base de datos, automáticamente te pedirá conectarla
 2. Selecciona tu proyecto `KTRMNL2`
 3. Haz clic en **"Connect"**
 
 Vercel automáticamente agregará las variables de entorno necesarias:
-- `KV_REST_API_URL`
-- `KV_REST_API_TOKEN`
+- `KV_REST_API_URL` (o `UPSTASH_REDIS_REST_URL`)
+- `KV_REST_API_TOKEN` (o `UPSTASH_REDIS_REST_TOKEN`)
 - `KV_REST_API_READ_ONLY_TOKEN`
 
 ### 3. Hacer deploy
@@ -60,17 +62,18 @@ Esto significa que:
 3. Espera 30+ minutos (o haz un nuevo deploy)
 4. Verifica que los widgets sigan ahí
 
-## Plan gratuito de Vercel KV
+## Plan gratuito de Upstash Redis
 
+- ✅ 10,000 comandos por día
 - ✅ 256 MB de almacenamiento
-- ✅ 30,000 comandos por día
 - ✅ Más que suficiente para KTRMNL2
+- ✅ Sin tarjeta de crédito requerida
 
 ## Troubleshooting
 
 ### "KV not available, falling back to file storage"
 
-Esto es normal en desarrollo local. Vercel KV solo funciona en producción.
+Esto es normal en desarrollo local. Upstash Redis solo funciona en producción (Vercel).
 
 ### Los datos siguen desapareciendo
 
@@ -78,8 +81,10 @@ Esto es normal en desarrollo local. Vercel KV solo funciona en producción.
 2. Revisa los logs de Vercel para ver si hay errores
 3. Asegúrate de que las variables de entorno estén configuradas
 
-### Ver los datos en KV
+### Ver los datos en Redis
 
-1. Ve a Vercel Dashboard → Storage → Tu base de datos KV
-2. Haz clic en **"Data Browser"**
+1. Ve a Vercel Dashboard → Storage → Tu base de datos Redis
+2. Haz clic en **"Data Browser"** o visita el dashboard de Upstash
 3. Verás las claves `layout` y `data` con tus configuraciones
+
+**Alternativa:** También puedes ir directamente a [Upstash Console](https://console.upstash.com/) para ver tus datos.
