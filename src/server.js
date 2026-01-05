@@ -175,7 +175,7 @@ app.get('/api/crypto-data', async (req, res) => {
 });
 
 app.get('/api/reminder-data', (req, res) => {
-    const dataPath = path.join(__dirname, '../config/data.json');
+    const dataPath = path.join(__dirname, '../config', 'data.json');
     let savedData = { reminder: '' };
     if (fs.existsSync(dataPath)) {
         savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
@@ -185,14 +185,14 @@ app.get('/api/reminder-data', (req, res) => {
 
 app.get('/dashboard', async (req, res) => {
     // Cargar configuración de layout
-    const layoutPath = path.join(__dirname, '../config/layout.json');
+    const layoutPath = path.join(__dirname, '../config', 'layout.json');
     let layout = { widgets: [] };
     if (fs.existsSync(layoutPath)) {
         layout = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
     }
 
     // Cargar datos dinámicos (recordatorio)
-    const dataPath = path.join(__dirname, '../config/data.json');
+    const dataPath = path.join(__dirname, '../config', 'data.json');
     let savedData = { reminder: '' };
     if (fs.existsSync(dataPath)) {
         savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
@@ -237,13 +237,13 @@ app.get('/dashboard', async (req, res) => {
 
 // 4. Panel de Administración
 app.get('/admin', (req, res) => {
-    const layoutPath = path.join(__dirname, '../config/layout.json');
+    const layoutPath = path.join(__dirname, '../config', 'layout.json');
     let layout = { widgets: [] };
     if (fs.existsSync(layoutPath)) {
         layout = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
     }
 
-    const dataPath = path.join(__dirname, '../config/data.json');
+    const dataPath = path.join(__dirname, '../config', 'data.json');
     let savedData = { reminder: '' };
     if (fs.existsSync(dataPath)) {
         savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
@@ -266,7 +266,7 @@ app.get('/admin', (req, res) => {
 app.use(express.json());
 app.post('/api/layout', (req, res) => {
     const newLayout = req.body;
-    const layoutPath = path.join(__dirname, '../config/layout.json');
+    const layoutPath = path.join(__dirname, '../config', 'layout.json');
     fs.writeFileSync(layoutPath, JSON.stringify(newLayout, null, 4));
     res.json({ success: true });
 });
@@ -274,7 +274,7 @@ app.post('/api/layout', (req, res) => {
 // API para guardar datos (recordatorio)
 app.post('/api/data', (req, res) => {
     const newData = req.body;
-    const dataPath = path.join(__dirname, '../config/data.json');
+    const dataPath = path.join(__dirname, '../config', 'data.json');
     // Leer existente para no borrar otros datos futuros
     let currentData = {};
     if (fs.existsSync(dataPath)) {
