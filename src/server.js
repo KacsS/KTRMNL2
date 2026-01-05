@@ -1,21 +1,18 @@
 const express = require('express');
 const path = require('path');
 const renderer = require('./renderer');
+const storage = require('./storage');
 require('dotenv').config();
-
-const fs = require('fs');
-
-// Determinar la ruta de configuración basada en el entorno
-const isVercel = process.env.VERCEL === '1';
-const configDir = isVercel ? '/tmp' : path.join(__dirname, '../config');
-
-// Asegurarse de que el directorio de configuración exista si es local
-if (!isVercel && !fs.existsSync(configDir)) {
-    fs.mkdirSync(configDir, { recursive: true });
-}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Inicializar almacenamiento con valores por defecto
+storage.initializeDefaults().then(() => {
+    console.log('✅ Storage initialized');
+}).catch(err => {
+    console.error('❌ Storage initialization error:', err);
+});
 
 // Configurar EJS como motor de plantillas
 app.set('view engine', 'ejs');
@@ -42,7 +39,7 @@ app.get('/api/display', async (req, res) => {
         const baseUrl = `${protocol}://${host}`;
 
         // Lógica de refresco (ej. 1 minuto)
-        const refreshRate = 60; 
+        const refreshRate = 60;
 
         res.json({
             status: 0,
@@ -64,7 +61,7 @@ app.get('/api/render', async (req, res) => {
         const protocol = req.protocol;
         const host = req.get('host');
         // Añadimos timestamp para evitar cache interno de Puppeteer/Chrome
-        const dashboardUrl = `${protocol}://${host}/dashboard?t=${Date.now()}`; 
+        const dashboardUrl = `${protocol}://${host}/dashboard?t=${Date.now()}`;
 
         console.log('Generando imagen desde:', dashboardUrl);
         const imageBuffer = await renderer.takeScreenshot(dashboardUrl);
@@ -74,7 +71,7 @@ app.get('/api/render', async (req, res) => {
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');
         res.set('Content-Type', 'image/png');
-        
+
         res.send(imageBuffer);
     } catch (error) {
         console.error('Error generando imagen:', error);
@@ -87,21 +84,21 @@ async function getWeatherData() {
     try {
         // Coordenadas de Barquisimeto, Lara, Venezuela
         // expresar coordenados de esta forma  10° 04′ 04″ N y 69° 20′ 48″ O 
-        const lat = 10 + (4/60) + (4/3600);
-        const lon = -(69 + (20/60) + (48/3600));
+        const lat = 10 + (4 / 60) + (4 / 3600);
+        const lon = -(69 + (20 / 60) + (48 / 3600));
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
-        
+
         const response = await fetch(url);
         if (!response.ok) throw new Error('Weather API error');
         const data = await response.json();
-        
+
         const temp = Math.round(data.current.temperature_2m);
         const code = data.current.weather_code;
-        
+
         // Mapeo simple de códigos WMO a Español/Iconos
         let condition = 'Despejado';
         let icon = '☀️';
-        
+
         if (code === 0) { condition = 'Despejado'; icon = '☀️'; }
         else if (code >= 1 && code <= 3) { condition = 'Parcialmente Nublado'; icon = '⛅'; }
         else if (code >= 45 && code <= 48) { condition = 'Niebla'; icon = '🌫️'; }
@@ -109,7 +106,7 @@ async function getWeatherData() {
         else if (code >= 61 && code <= 65) { condition = 'Lluvia'; icon = '🌧️'; }
         else if (code >= 80 && code <= 82) { condition = 'Chubascos'; icon = '☔'; }
         else if (code >= 95) { condition = 'Tormenta'; icon = '⚡'; }
-        
+
         return { temp, condition, icon };
     } catch (error) {
         console.error('Error obteniendo clima:', error);
@@ -135,7 +132,7 @@ function getMotivation() {
         "El éxito no es definitivo, el fracaso no es fatal: lo que cuenta es el valor para continuar.",
         "La persistencia puede cambiar el fracaso en un logro extraordinario."
     ];
-    
+
     // Calcular el día del año para seleccionar una frase fija por 24 horas
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 0);
@@ -150,11 +147,11 @@ async function getCryptoData() {
     try {
         // Obtener datos de Bitcoin, Ethereum y Tether con sparkline (gráfica simple 7 días)
         const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,tether&order=market_cap_desc&per_page=3&page=1&sparkline=true&price_change_percentage=24h';
-        
+
         const response = await fetch(url);
         if (!response.ok) throw new Error('Crypto API error');
         const data = await response.json();
-        
+
         // Formatear datos
         return data.map(coin => ({
             id: coin.id,
@@ -181,29 +178,17 @@ app.get('/api/crypto-data', async (req, res) => {
     res.json(crypto);
 });
 
-app.get('/api/reminder-data', (req, res) => {
-    const dataPath = path.join(configDir, 'data.json');
-    let savedData = { reminder: '' };
-    if (fs.existsSync(dataPath)) {
-        savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    }
+app.get('/api/reminder-data', async (req, res) => {
+    const savedData = await storage.get('data') || { reminder: '' };
     res.json({ reminder: savedData.reminder });
 });
 
 app.get('/dashboard', async (req, res) => {
     // Cargar configuración de layout
-    const layoutPath = path.join(configDir, 'layout.json');
-    let layout = { widgets: [] };
-    if (fs.existsSync(layoutPath)) {
-        layout = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
-    }
+    const layout = await storage.get('layout') || { widgets: [] };
 
     // Cargar datos dinámicos (recordatorio)
-    const dataPath = path.join(configDir, 'data.json');
-    let savedData = { reminder: '' };
-    if (fs.existsSync(dataPath)) {
-        savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    }
+    const savedData = await storage.get('data') || { reminder: '' };
 
     // Obtener clima
     let weather = await getWeatherData();
@@ -236,26 +221,17 @@ app.get('/dashboard', async (req, res) => {
         generatedAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     };
 
-    res.render('dashboard', { 
+    res.render('dashboard', {
         layout: layout,
-        data: data 
+        data: data
     });
 });
 
 // 4. Panel de Administración
-app.get('/admin', (req, res) => {
-    const layoutPath = path.join(configDir, 'layout.json');
-    let layout = { widgets: [] };
-    if (fs.existsSync(layoutPath)) {
-        layout = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
-    }
+app.get('/admin', async (req, res) => {
+    const layout = await storage.get('layout') || { widgets: [] };
+    const savedData = await storage.get('data') || { reminder: '' };
 
-    const dataPath = path.join(configDir, 'data.json');
-    let savedData = { reminder: '' };
-    if (fs.existsSync(dataPath)) {
-        savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    }
-    
     // Lista de widgets disponibles
     const availableWidgets = [
         { type: 'date', name: 'Fecha' },
@@ -271,25 +247,20 @@ app.get('/admin', (req, res) => {
 
 // API para guardar layout
 app.use(express.json());
-app.post('/api/layout', (req, res) => {
+app.post('/api/layout', async (req, res) => {
     const newLayout = req.body;
-    const layoutPath = path.join(configDir, 'layout.json');
-    fs.writeFileSync(layoutPath, JSON.stringify(newLayout, null, 4));
-    res.json({ success: true });
+    const success = await storage.set('layout', newLayout);
+    res.json({ success });
 });
 
 // API para guardar datos (recordatorio)
-app.post('/api/data', (req, res) => {
+app.post('/api/data', async (req, res) => {
     const newData = req.body;
-    const dataPath = path.join(configDir, 'data.json');
     // Leer existente para no borrar otros datos futuros
-    let currentData = {};
-    if (fs.existsSync(dataPath)) {
-        currentData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    }
+    const currentData = await storage.get('data') || {};
     const updatedData = { ...currentData, ...newData };
-    fs.writeFileSync(dataPath, JSON.stringify(updatedData, null, 4));
-    res.json({ success: true });
+    const success = await storage.set('data', updatedData);
+    res.json({ success });
 });
 
 // Iniciar servidor
