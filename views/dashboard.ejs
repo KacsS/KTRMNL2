@@ -487,27 +487,24 @@
         }
         setInterval(updateClock, 1000);
 
-        // 2. CLIMA (Actualización cada 20 minutos)
+        // 2. CLIMA (Actualización cada 20 minutos sin recargar)
         async function updateWeather() {
             try {
                 const response = await fetch('/api/weather-data');
                 if (!response.ok) return;
                 const weather = await response.json();
                 
-                // Buscar elementos del widget de clima (asumiendo estructura fija)
-                // Nota: Esto requiere que el widget de clima tenga clases específicas o IDs.
-                // Como es dinámico, recargaremos solo si hay cambios drásticos, pero por ahora
-                // vamos a intentar actualizar el DOM si encontramos los elementos.
-                // Para simplificar sin modificar todos los widgets, podemos recargar la página
-                // SOLO si han pasado 20 minutos, pero el usuario pidió NO recargar cada minuto.
-                
-                // Mejor enfoque: Recargar la página completa cada 20 minutos para asegurar todo.
-                // O actualizar el DOM si podemos identificar el widget.
-                // Vamos a intentar actualizar el DOM del widget de clima si existe.
-                
-                // Como no tenemos IDs únicos fáciles, vamos a buscar por contenido o estructura
-                // O mejor, recargamos la página cada 20 minutos. Es lo más seguro y cumple el requisito.
-                window.location.reload(); 
+                const weatherWidget = document.getElementById('weather-widget');
+                if (weatherWidget) {
+                    console.log("Actualizando widget del clima dinámicamente.");
+                    const tempEl = weatherWidget.querySelector('.weather-temp');
+                    const iconEl = weatherWidget.querySelector('.weather-icon');
+                    const conditionEl = weatherWidget.querySelector('.weather-condition');
+
+                    if (tempEl) tempEl.textContent = `${weather.temp}°`;
+                    if (iconEl) iconEl.textContent = weather.icon;
+                    if (conditionEl) conditionEl.textContent = weather.condition;
+                }
             } catch (e) {
                 console.error("Error actualizando clima", e);
             }
@@ -515,7 +512,7 @@
         // 20 minutos * 60 segundos * 1000 ms
         setInterval(updateWeather, 20 * 60 * 1000);
 
-        // 3. RECORDATORIOS (Polling cada 1 minuto para detectar cambios)
+        // 3. RECORDATORIOS (Polling cada 1 minuto para detectar cambios sin recargar)
         let currentReminder = "<%= data.reminder %>"; // Valor inicial
         
         async function checkReminders() {
@@ -525,8 +522,15 @@
                 const data = await response.json();
                 
                 if (data.reminder !== currentReminder) {
-                    console.log("Cambio detectado en recordatorios. Recargando...");
-                    window.location.reload(); // La forma más fácil de reflejar el cambio en el widget EJS
+                    console.log("Cambio detectado en recordatorios. Actualizando dinámicamente...");
+                    currentReminder = data.reminder; // Actualizar el valor actual
+                    const reminderWidget = document.getElementById('reminder-widget');
+                    if(reminderWidget) {
+                        const reminderTextEl = reminderWidget.querySelector('.reminder-text');
+                        if (reminderTextEl) {
+                            reminderTextEl.textContent = currentReminder;
+                        }
+                    }
                 }
             } catch (e) {
                 console.error("Error verificando recordatorios", e);
