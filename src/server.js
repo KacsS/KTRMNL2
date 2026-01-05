@@ -3,6 +3,17 @@ const path = require('path');
 const renderer = require('./renderer');
 require('dotenv').config();
 
+const fs = require('fs');
+
+// Determinar la ruta de configuración basada en el entorno
+const isVercel = process.env.VERCEL === '1';
+const configDir = isVercel ? '/tmp' : path.join(__dirname, '../config');
+
+// Asegurarse de que el directorio de configuración exista si es local
+if (!isVercel && !fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -70,10 +81,6 @@ app.get('/api/render', async (req, res) => {
         res.status(500).send('Error generating image');
     }
 });
-
-const fs = require('fs');
-
-// ... (código anterior)
 
 // 3. La vista HTML que será convertida a imagen
 async function getWeatherData() {
@@ -175,7 +182,7 @@ app.get('/api/crypto-data', async (req, res) => {
 });
 
 app.get('/api/reminder-data', (req, res) => {
-    const dataPath = path.join(__dirname, '../config', 'data.json');
+    const dataPath = path.join(configDir, 'data.json');
     let savedData = { reminder: '' };
     if (fs.existsSync(dataPath)) {
         savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
@@ -185,14 +192,14 @@ app.get('/api/reminder-data', (req, res) => {
 
 app.get('/dashboard', async (req, res) => {
     // Cargar configuración de layout
-    const layoutPath = path.join(__dirname, '../config', 'layout.json');
+    const layoutPath = path.join(configDir, 'layout.json');
     let layout = { widgets: [] };
     if (fs.existsSync(layoutPath)) {
         layout = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
     }
 
     // Cargar datos dinámicos (recordatorio)
-    const dataPath = path.join(__dirname, '../config', 'data.json');
+    const dataPath = path.join(configDir, 'data.json');
     let savedData = { reminder: '' };
     if (fs.existsSync(dataPath)) {
         savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
@@ -237,13 +244,13 @@ app.get('/dashboard', async (req, res) => {
 
 // 4. Panel de Administración
 app.get('/admin', (req, res) => {
-    const layoutPath = path.join(__dirname, '../config', 'layout.json');
+    const layoutPath = path.join(configDir, 'layout.json');
     let layout = { widgets: [] };
     if (fs.existsSync(layoutPath)) {
         layout = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
     }
 
-    const dataPath = path.join(__dirname, '../config', 'data.json');
+    const dataPath = path.join(configDir, 'data.json');
     let savedData = { reminder: '' };
     if (fs.existsSync(dataPath)) {
         savedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
@@ -266,7 +273,7 @@ app.get('/admin', (req, res) => {
 app.use(express.json());
 app.post('/api/layout', (req, res) => {
     const newLayout = req.body;
-    const layoutPath = path.join(__dirname, '../config', 'layout.json');
+    const layoutPath = path.join(configDir, 'layout.json');
     fs.writeFileSync(layoutPath, JSON.stringify(newLayout, null, 4));
     res.json({ success: true });
 });
@@ -274,7 +281,7 @@ app.post('/api/layout', (req, res) => {
 // API para guardar datos (recordatorio)
 app.post('/api/data', (req, res) => {
     const newData = req.body;
-    const dataPath = path.join(__dirname, '../config', 'data.json');
+    const dataPath = path.join(configDir, 'data.json');
     // Leer existente para no borrar otros datos futuros
     let currentData = {};
     if (fs.existsSync(dataPath)) {
