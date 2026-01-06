@@ -8,7 +8,8 @@ let kv = null;
 // Intentar cargar Vercel KV solo si estamos en Vercel
 if (isVercel) {
     try {
-        kv = require('@vercel/kv');
+        const { kv: vercelKv } = require('@vercel/kv');
+        kv = vercelKv;
         console.log('✅ Vercel KV initialized');
     } catch (error) {
         console.warn('⚠️ Vercel KV not available, falling back to file storage');
