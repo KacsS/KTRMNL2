@@ -513,7 +513,7 @@
         setInterval(updateWeather, 20 * 60 * 1000);
 
         // 3. RECORDATORIOS (Polling cada 1 minuto para detectar cambios sin recargar)
-        let currentReminder = "<%= data.reminder %>"; // Valor inicial
+        let currentReminder = <%- JSON.stringify(data.reminder || '') %>; // Valor inicial
         
         async function checkReminders() {
             try {
@@ -528,7 +528,7 @@
                     if(reminderWidget) {
                         const reminderTextEl = reminderWidget.querySelector('.reminder-text');
                         if (reminderTextEl) {
-                            reminderTextEl.textContent = currentReminder;
+                            reminderTextEl.textContent = `"${currentReminder}"`;
                         }
                     }
                 }

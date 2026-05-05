@@ -97,6 +97,37 @@ Esto devolverá el JSON de configuración que instruye al dispositivo a descarga
 
 ## ⚙️ Configuración Personalizada
 
+### Modo Sin Base de Datos (solo APIs externas)
+
+Si no quieres guardar nada en KV/JSON y prefieres que los widgets se alimenten desde Internet, activa este modo en tu `.env`:
+
+```env
+REMOTE_WIDGETS_ONLY=1
+WIDGET_LAYOUT_API_URL=https://tu-api.com/layout
+REMINDER_API_URL=https://api.adviceslip.com/advice
+```
+
+Comportamiento en este modo:
+- `layout` se toma desde `WIDGET_LAYOUT_API_URL` (si no existe, usa un layout por defecto en memoria).
+- `reminder` se toma desde `REMINDER_API_URL`.
+- `/admin`, `/api/layout` y `/api/data` quedan deshabilitados.
+- No se usa almacenamiento local ni Vercel KV.
+
+Formato esperado para layout remoto:
+
+```json
+{
+    "widgets": [
+        { "id": "w1", "type": "date", "title": "FECHA" },
+        { "id": "w2", "type": "weather", "title": "CLIMA" },
+        { "id": "w3", "type": "crypto", "title": "CRIPTOS" },
+        { "id": "w4", "type": "reminder", "title": "RECORDATORIO" }
+    ]
+}
+```
+
+Tipos válidos: `date`, `weather`, `crypto`, `crypto_chart`, `reminder`.
+
 ### Cambiar Ubicación del Clima
 Editar el archivo `src/server.js` y buscar la función `getWeatherData`. Modificar las variables `lat` y `lon`:
 

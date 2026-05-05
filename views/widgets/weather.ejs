@@ -1,11 +1,11 @@
-<div class="widget">
+<div class="widget" id="weather-widget">
     <div class="widget-title"><%= widget.title || 'CLIMA' %></div>
     <% if (data.weather) { %>
     <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <span style="font-size: 40px;"><%= data.weather.icon %></span>
-        <div class="big-text"><%= data.weather.temp %>°C</div>
+        <span class="weather-icon" style="font-size: 40px;"><%= data.weather.icon %></span>
+        <div class="big-text weather-temp"><%= data.weather.temp %>°</div>
     </div>
-    <div style="text-align: center; margin-top: 5px;"><%= data.weather.condition %></div>
+    <div class="weather-condition" style="text-align: center; margin-top: 5px;"><%= data.weather.condition %></div>
     <% } else { %>
     <div style="text-align: center; margin-top: 20px;">Cargando...</div>
     <% } %>

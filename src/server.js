@@ -6,13 +6,24 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const REMOTE_WIDGETS_ONLY = process.env.REMOTE_WIDGETS_ONLY === '1';
+const WIDGET_LAYOUT_API_URL = process.env.WIDGET_LAYOUT_API_URL || '';
+const REMINDER_API_URL = process.env.REMINDER_API_URL || 'https://api.adviceslip.com/advice';
+const allowedWidgetTypes = new Set(['date', 'weather', 'crypto', 'crypto_chart', 'reminder']);
+
+// Permite obtener protocolo/host correctos detras de proxies (Vercel, Nginx, etc.)
+app.set('trust proxy', true);
 
 // Inicializar almacenamiento con valores por defecto
-storage.initializeDefaults().then(() => {
-    console.log('✅ Storage initialized');
-}).catch(err => {
-    console.error('❌ Storage initialization error:', err);
-});
+if (!REMOTE_WIDGETS_ONLY) {
+    storage.initializeDefaults().then(() => {
+        console.log('✅ Storage initialized');
+    }).catch(err => {
+        console.error('❌ Storage initialization error:', err);
+    });
+} else {
+    console.log('🌐 REMOTE_WIDGETS_ONLY activo: storage local/KV deshabilitado');
+}
 
 // Configurar EJS como motor de plantillas
 app.set('view engine', 'ejs');
@@ -167,6 +178,90 @@ async function getCryptoData() {
     }
 }
 
+function sanitizeLayout(layout) {
+    const inputWidgets = Array.isArray(layout?.widgets) ? layout.widgets : [];
+
+    const widgets = inputWidgets
+        .filter(widget => widget && typeof widget === 'object')
+        .filter(widget => typeof widget.type === 'string' && allowedWidgetTypes.has(widget.type))
+        .slice(0, 4)
+        .map(widget => ({
+            id: typeof widget.id === 'string' ? widget.id : `w${Date.now()}`,
+            type: widget.type,
+            title: typeof widget.title === 'string' ? widget.title.slice(0, 40) : widget.type.toUpperCase()
+        }));
+
+    if (widgets.length > 0) {
+        return { widgets };
+    }
+
+    return {
+        widgets: [
+            { id: 'w-date', type: 'date', title: 'FECHA' },
+            { id: 'w-weather', type: 'weather', title: 'CLIMA' },
+            { id: 'w-crypto', type: 'crypto', title: 'CRIPTOS' },
+            { id: 'w-reminder', type: 'reminder', title: 'RECORDATORIO' }
+        ]
+    };
+}
+
+async function getRemoteLayout() {
+    if (!WIDGET_LAYOUT_API_URL) {
+        return sanitizeLayout(null);
+    }
+
+    try {
+        const response = await fetch(WIDGET_LAYOUT_API_URL, {
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error(`Layout API error: ${response.status}`);
+        const data = await response.json();
+        return sanitizeLayout(data);
+    } catch (error) {
+        console.error('Error obteniendo layout remoto:', error);
+        return sanitizeLayout(null);
+    }
+}
+
+function parseReminderFromApi(payload) {
+    if (!payload) return null;
+
+    if (typeof payload.reminder === 'string' && payload.reminder.trim()) {
+        return payload.reminder.trim();
+    }
+    if (typeof payload.quote === 'string' && payload.quote.trim()) {
+        return payload.quote.trim();
+    }
+    if (payload.slip && typeof payload.slip.advice === 'string' && payload.slip.advice.trim()) {
+        return payload.slip.advice.trim();
+    }
+    if (Array.isArray(payload) && payload[0] && typeof payload[0].q === 'string') {
+        return payload[0].q.trim();
+    }
+    if (Array.isArray(payload) && payload[0] && typeof payload[0].quote === 'string') {
+        return payload[0].quote.trim();
+    }
+
+    return null;
+}
+
+async function getRemoteReminder() {
+    try {
+        const response = await fetch(REMINDER_API_URL, {
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error(`Reminder API error: ${response.status}`);
+        const payload = await response.json();
+        const reminder = parseReminderFromApi(payload);
+        return reminder || 'Sin recordatorios remotos disponibles';
+    } catch (error) {
+        console.error('Error obteniendo reminder remoto:', error);
+        return 'Sin recordatorios remotos disponibles';
+    }
+}
+
 // API Endpoints para actualizaciones dinámicas
 app.get('/api/weather-data', async (req, res) => {
     const weather = await getWeatherData();
@@ -179,16 +274,25 @@ app.get('/api/crypto-data', async (req, res) => {
 });
 
 app.get('/api/reminder-data', async (req, res) => {
+    if (REMOTE_WIDGETS_ONLY) {
+        const reminder = await getRemoteReminder();
+        return res.json({ reminder });
+    }
+
     const savedData = await storage.get('data') || { reminder: '' };
     res.json({ reminder: savedData.reminder });
 });
 
 app.get('/dashboard', async (req, res) => {
     // Cargar configuración de layout
-    const layout = await storage.get('layout') || { widgets: [] };
+    const layout = REMOTE_WIDGETS_ONLY
+        ? await getRemoteLayout()
+        : (await storage.get('layout') || { widgets: [] });
 
     // Cargar datos dinámicos (recordatorio)
-    const savedData = await storage.get('data') || { reminder: '' };
+    const savedData = REMOTE_WIDGETS_ONLY
+        ? { reminder: await getRemoteReminder() }
+        : (await storage.get('data') || { reminder: '' });
 
     // Obtener clima
     let weather = await getWeatherData();
@@ -229,6 +333,10 @@ app.get('/dashboard', async (req, res) => {
 
 // 4. Panel de Administración
 app.get('/admin', async (req, res) => {
+    if (REMOTE_WIDGETS_ONLY) {
+        return res.status(403).send('Admin deshabilitado en modo REMOTE_WIDGETS_ONLY');
+    }
+
     const layout = await storage.get('layout') || { widgets: [] };
     const savedData = await storage.get('data') || { reminder: '' };
 
@@ -248,13 +356,26 @@ app.get('/admin', async (req, res) => {
 // API para guardar layout
 app.use(express.json());
 app.post('/api/layout', async (req, res) => {
-    const newLayout = req.body;
+    if (REMOTE_WIDGETS_ONLY) {
+        return res.status(403).json({ success: false, error: 'Layout API disabled in REMOTE_WIDGETS_ONLY mode' });
+    }
+
+    const inputWidgets = Array.isArray(req.body?.widgets) ? req.body.widgets : null;
+    if (!inputWidgets) {
+        return res.status(400).json({ success: false, error: 'Invalid layout payload' });
+    }
+
+    const newLayout = sanitizeLayout({ widgets: inputWidgets });
     const success = await storage.set('layout', newLayout);
-    res.json({ success });
+    res.json({ success, widgets: newLayout.widgets.length });
 });
 
 // API para guardar datos (recordatorio)
 app.post('/api/data', async (req, res) => {
+    if (REMOTE_WIDGETS_ONLY) {
+        return res.status(403).json({ success: false, error: 'Data API disabled in REMOTE_WIDGETS_ONLY mode' });
+    }
+
     const newData = req.body;
     // Leer existente para no borrar otros datos futuros
     const currentData = await storage.get('data') || {};
