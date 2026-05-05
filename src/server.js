@@ -384,7 +384,11 @@ app.post('/api/data', async (req, res) => {
     res.json({ success });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`🚀 KTRMNL2 Server corriendo en http://localhost:${PORT}`);
-});
+// Iniciar servidor solo en entorno local (no serverless)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 KTRMNL2 Server corriendo en http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;

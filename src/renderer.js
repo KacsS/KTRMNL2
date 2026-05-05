@@ -1,13 +1,32 @@
-const puppeteer = require('puppeteer');
+const isVercel = process.env.VERCEL === '1';
+
+let puppeteer;
+let chromium;
+
+if (isVercel) {
+    puppeteer = require('puppeteer-core');
+    chromium = require('@sparticuz/chromium');
+} else {
+    puppeteer = require('puppeteer');
+}
 
 let browser;
 
 async function getBrowser() {
     if (!browser) {
-        browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+        if (isVercel) {
+            browser = await puppeteer.launch({
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless
+            });
+        } else {
+            browser = await puppeteer.launch({
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+        }
     }
     return browser;
 }
@@ -23,7 +42,7 @@ async function takeScreenshot(url) {
         deviceScaleFactor: 1
     });
 
-    await page.goto(url, { waitUntil: 'networkidle0' });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
 
     // Tomar screenshot
     const screenshot = await page.screenshot({
