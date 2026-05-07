@@ -10,10 +10,9 @@ if (isVercel) {
     puppeteer = require('puppeteer');
 }
 
-let browser;
-
-async function getBrowser() {
-    if (!browser) {
+async function takeScreenshot(url) {
+    let browser;
+    try {
         if (isVercel) {
             browser = await puppeteer.launch({
                 args: chromium.args,
@@ -27,31 +26,34 @@ async function getBrowser() {
                 args: ['--no-sandbox', '--disable-setuid-sandbox']
             });
         }
+
+        const page = await browser.newPage();
+
+        // Configurar viewport al tamaño exacto de TRMNL (800x480)
+        await page.setViewport({
+            width: 800,
+            height: 480,
+            deviceScaleFactor: 1
+        });
+
+        // Esperar a que no haya más de 2 conexiones de red activas (asegura carga de Chart.js)
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+        // Tomar screenshot
+        const screenshot = await page.screenshot({
+            type: 'png',
+            encoding: 'binary'
+        });
+
+        return screenshot;
+    } catch (error) {
+        console.error('Error in takeScreenshot:', error);
+        throw error;
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
     }
-    return browser;
-}
-
-async function takeScreenshot(url) {
-    const browser = await getBrowser();
-    const page = await browser.newPage();
-
-    // Configurar viewport al tamaño exacto de TRMNL (800x480)
-    await page.setViewport({
-        width: 800,
-        height: 480,
-        deviceScaleFactor: 1
-    });
-
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
-
-    // Tomar screenshot
-    const screenshot = await page.screenshot({
-        type: 'png',
-        encoding: 'binary'
-    });
-
-    await page.close();
-    return screenshot;
 }
 
 module.exports = { takeScreenshot };

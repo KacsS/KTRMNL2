@@ -284,51 +284,47 @@ app.get('/api/reminder-data', async (req, res) => {
 });
 
 app.get('/dashboard', async (req, res) => {
-    // Cargar configuración de layout
-    const layout = REMOTE_WIDGETS_ONLY
-        ? await getRemoteLayout()
-        : (await storage.get('layout') || { widgets: [] });
+    try {
+        // Ejecutar todas las llamadas a APIs en paralelo para ahorrar tiempo (vital en Vercel)
+        const [layoutResult, savedDataResult, weatherResult, cryptoResult] = await Promise.all([
+            REMOTE_WIDGETS_ONLY ? getRemoteLayout() : storage.get('layout'),
+            REMOTE_WIDGETS_ONLY ? getRemoteReminder().then(r => ({ reminder: r })) : storage.get('data'),
+            getWeatherData(),
+            getCryptoData()
+        ]);
 
-    // Cargar datos dinámicos (recordatorio)
-    const savedData = REMOTE_WIDGETS_ONLY
-        ? { reminder: await getRemoteReminder() }
-        : (await storage.get('data') || { reminder: '' });
+        const layout = layoutResult || { widgets: [] };
+        const savedData = savedDataResult || { reminder: '' };
+        const weather = weatherResult || { temp: '--', condition: 'Error', icon: '❓' };
+        
+        let crypto = cryptoResult;
+        if (!crypto) {
+            crypto = [
+                { symbol: 'BTC', price: 0, change: 0, sparkline: [] },
+                { symbol: 'ETH', price: 0, change: 0, sparkline: [] },
+                { symbol: 'USDT', price: 1, change: 0, sparkline: [] }
+            ];
+        }
 
-    // Obtener clima
-    let weather = await getWeatherData();
-    console.log('Weather result:', weather);
+        const data = {
+            date: new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+            time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            battery: '100%',
+            reminder: savedData.reminder || '',
+            weather: weather,
+            crypto: crypto,
+            motivation: getMotivation(),
+            generatedAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        };
 
-    if (!weather) {
-        weather = { temp: '--', condition: 'Fallback', icon: '❓' };
+        res.render('dashboard', {
+            layout: layout,
+            data: data
+        });
+    } catch (error) {
+        console.error('CRITICAL: Error loading dashboard data:', error);
+        res.status(500).send('Error loading dashboard');
     }
-
-    // Obtener Criptos
-    let crypto = await getCryptoData();
-    if (!crypto) {
-        // Datos falsos de respaldo si falla la API
-        crypto = [
-            { symbol: 'BTC', price: 0, change: 0, sparkline: [] },
-            { symbol: 'ETH', price: 0, change: 0, sparkline: [] },
-            { symbol: 'USDT', price: 1, change: 0, sparkline: [] }
-        ];
-    }
-
-    // Datos globales para los widgets
-    const data = {
-        date: new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-        time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-        battery: '100%', // En tablet siempre asumimos 100% o enchufado
-        reminder: savedData.reminder,
-        weather: weather,
-        crypto: crypto,
-        motivation: getMotivation(),
-        generatedAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    };
-
-    res.render('dashboard', {
-        layout: layout,
-        data: data
-    });
 });
 
 // 4. Panel de Administración

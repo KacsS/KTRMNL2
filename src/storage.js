@@ -76,7 +76,12 @@ async function set(key, value) {
         }
     }
 
-    // Fallback a archivos locales
+    // Fallback a archivos locales (Solo si NO estamos en Vercel)
+    if (isVercel) {
+        console.warn(`⚠️ Intento de guardado en Vercel sin KV configurado para la clave: ${key}`);
+        return false;
+    }
+
     const filePath = path.join(localConfigDir, `${key}.json`);
     try {
         fs.writeFileSync(filePath, JSON.stringify(value, null, 4));
@@ -92,6 +97,12 @@ async function set(key, value) {
  * Inicializar datos por defecto si no existen
  */
 async function initializeDefaults() {
+    // En Vercel, si no hay KV, no podemos inicializar nada persistente
+    if (isVercel && !kv) {
+        console.warn('⚠️ Vercel KV no configurado. Saltando inicialización de valores por defecto.');
+        return;
+    }
+
     // Verificar y crear layout por defecto
     const existingLayout = await get('layout');
     if (!existingLayout) {
